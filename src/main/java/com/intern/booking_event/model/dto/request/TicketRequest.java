@@ -1,4 +1,4 @@
-package com.intern.booking_event.ticket.dto;
+package com.intern.booking_event.model.dto.request;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TicketRequestDTO {
+public class TicketRequest {
 
     private Long eventId; // Sẽ được tự động map từ Path Variable trên URL vào
 

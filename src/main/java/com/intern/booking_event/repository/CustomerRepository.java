@@ -1,5 +1,6 @@
-package com.intern.booking_event.customer;
+package com.intern.booking_event.repository;
 
+import com.intern.booking_event.model.entity.Customer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

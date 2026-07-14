@@ -1,9 +1,7 @@
-package com.intern.booking_event.customer;
+package com.intern.booking_event.model.entity;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.intern.booking_event.booking.Booking;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

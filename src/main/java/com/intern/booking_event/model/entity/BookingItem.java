@@ -1,8 +1,6 @@
-package com.intern.booking_event.ticket;
+package com.intern.booking_event.model.entity;
 
 import java.math.BigDecimal;
-
-import com.intern.booking_event.event.Event;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,31 +18,29 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "ticket_types")
+@Table(name = "booking_items")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TicketType {
+public class BookingItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id", nullable = false)
-    private Event event;
+    @JoinColumn(name = "booking_id", nullable = false)
+    private Booking booking;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ticket_type_id", nullable = false)
+    private TicketType ticketType;
 
     @Column(nullable = false)
-    private String name; 
+    private int quantity;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal price;
-
-    @Column(name = "total_quantity", nullable = false)
-    private int totalQuantity;
-
-    @Column(name = "sold_quantity", nullable = false)
-    private int soldQuantity;
+    @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal unitPrice; 
 }

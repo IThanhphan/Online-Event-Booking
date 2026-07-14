@@ -1,4 +1,4 @@
-package com.intern.booking_event.event.dto;
+package com.intern.booking_event.model.dto.response;
 
 import lombok.*;
 import java.time.Instant;
@@ -7,7 +7,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EventResponseDTO {
+public class EventResponse {
     private Long id;
     private String title;
     private String description;

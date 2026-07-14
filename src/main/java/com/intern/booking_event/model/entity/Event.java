@@ -1,4 +1,4 @@
-package com.intern.booking_event.event;
+package com.intern.booking_event.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

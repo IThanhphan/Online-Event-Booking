@@ -1,11 +1,11 @@
-package com.intern.booking_event.booking;
+package com.intern.booking_event.model.entity;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.intern.booking_event.customer.Customer;
+import com.intern.booking_event.constant.BookingStatus;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -48,7 +48,7 @@ public class Booking {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private BookingStatus status; 
+    private BookingStatus status;
 
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;

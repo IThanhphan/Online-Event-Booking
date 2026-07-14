@@ -1,5 +1,6 @@
-package com.intern.booking_event.booking;
+package com.intern.booking_event.repository;
 
+import com.intern.booking_event.model.entity.Booking;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

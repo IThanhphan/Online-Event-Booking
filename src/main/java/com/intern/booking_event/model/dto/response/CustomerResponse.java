@@ -1,4 +1,4 @@
-package com.intern.booking_event.customer.dto;
+package com.intern.booking_event.model.dto.response;
 
 import lombok.*;
 
@@ -6,7 +6,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CustomerResponseDTO {
+public class CustomerResponse {
     private Long id;
     private String name;
     private String email;

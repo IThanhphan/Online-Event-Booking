@@ -1,4 +1,4 @@
-package com.intern.booking_event.booking.dto;
+package com.intern.booking_event.model.dto.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -11,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BookingRequestDTO {
+public class BookingRequest {
 
     @NotNull(message = "ID khách hàng (customerId) không được để null")
     private Long customerId;

@@ -1,4 +1,4 @@
-package com.intern.booking_event.event.dto;
+package com.intern.booking_event.model.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,7 +11,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EventRequestDTO {
+public class EventRequest {
 
     @NotBlank(message = "Tiêu đề sự kiện (title) là bắt buộc và không được để trống")
     private String title;

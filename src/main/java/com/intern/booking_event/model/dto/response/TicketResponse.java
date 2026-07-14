@@ -1,4 +1,4 @@
-package com.intern.booking_event.ticket.dto;
+package com.intern.booking_event.model.dto.response;
 
 import lombok.*;
 import java.math.BigDecimal;
@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TicketResponseDTO {
+public class TicketResponse {
     private Long id;
     private Long eventId;
     private String name;
