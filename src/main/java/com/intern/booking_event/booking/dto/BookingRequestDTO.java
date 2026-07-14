@@ -1,4 +1,4 @@
-package com.example.event_booking.booking.dto;
+package com.intern.booking_event.booking.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
