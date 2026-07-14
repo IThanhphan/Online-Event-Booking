@@ -17,6 +17,10 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+  ai:
+    anthropic:
+      api-key: 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
   flyway:
     enabled: true
     locations: classpath:db/migration

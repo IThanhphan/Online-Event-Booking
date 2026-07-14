@@ -1,0 +1,9 @@
+CREATE TABLE bookings (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    reference VARCHAR(255) NOT NULL UNIQUE,
+    customer_id BIGINT NOT NULL,
+    status ENUM('PENDING', 'PAID', 'CONFIRMED', 'CANCELLED') NOT NULL DEFAULT 'PENDING',
+    total_amount DECIMAL(19, 2) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_booking_customer FOREIGN KEY (customer_id) REFERENCES customers(id)
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
