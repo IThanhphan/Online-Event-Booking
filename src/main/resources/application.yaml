@@ -1,3 +1,18 @@
 spring:
-  application:
-    name: booking_event
+  datasource:
+    url: jdbc:mysql://localhost:3306/online_event_booking?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  ai:
+    anthropic:
+      api-key: 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
