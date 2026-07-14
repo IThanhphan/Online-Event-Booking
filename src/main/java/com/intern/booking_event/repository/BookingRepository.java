@@ -1,23 +1,21 @@
 package com.intern.booking_event.repository;
 
-import com.intern.booking_event.model.entity.Booking;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import java.util.List;
-import java.util.Optional;
+
+import com.intern.booking_event.constant.BookingStatus;
+import com.intern.booking_event.model.entity.Booking;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
     
-    Optional<Booking> findByReference(String reference);
-
-    // Tối ưu hóa hiệu năng bằng JOIN FETCH dữ liệu items và ticketType cùng lúc
-    @Query("SELECT DISTINCT b FROM Booking b " +
-           "LEFT JOIN FETCH b.items i " +
-           "LEFT JOIN FETCH i.ticketType " +
-           "WHERE b.customer.id = :customerId " +
-           "ORDER BY b.createdAt DESC")
-    List<Booking> findByCustomerId(@Param("customerId") Long customerId);
+    // Updating the status of a booking
+    @Modifying
+    @Query("UPDATE Booking b SET b.status = :laterStatus WHERE b.id = :id AND b.status = :firstStatus")
+    int updateStatus(@Param("id") Long id, @Param("firstStatus") BookingStatus firstStatus, @Param("laterStatus") BookingStatus laterStatus);
 }
