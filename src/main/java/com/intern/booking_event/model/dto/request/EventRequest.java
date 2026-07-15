@@ -1,11 +1,15 @@
 package com.intern.booking_event.model.dto.request;
 
+import com.intern.booking_event.model.dto.response.EventResponse;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Future;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -30,4 +34,8 @@ public class EventRequest {
 
     @NotBlank(message = "Tên nhà tổ chức (organizer) là bắt buộc và không được để trống")
     private String organizer;
+
+    @NotEmpty(message = "Danh sách loại vé (ticketTypes) không được để trống")
+    @Valid
+    private List<TicketRequest> ticketTypes;
 }
