@@ -11,5 +11,5 @@ import com.intern.booking_event.model.entity.Booking;
 public interface BookingMapper {
     BookingResponse toBookingResponse(Booking booking);
 
-    Booking toBooking(BookingRequest bookingXRequest);
+    Booking toBooking(BookingRequest bookingRequest);
 }
