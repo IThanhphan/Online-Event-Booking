@@ -3,6 +3,7 @@ package com.intern.booking_event.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.Instant;
+import java.util.List;
 
 @Entity
 @Table(name = "events")
@@ -34,4 +35,7 @@ public class Event {
 
     @Column(nullable = false)
     private String organizer;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TicketType> ticketTypes;
 }
