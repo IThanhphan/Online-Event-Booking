@@ -2,6 +2,7 @@ package com.intern.booking_event.repository;
 
 import com.intern.booking_event.model.entity.TicketType;
 import jakarta.persistence.LockModeType;
+import lombok.Getter;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;

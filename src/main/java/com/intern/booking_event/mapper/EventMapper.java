@@ -12,17 +12,10 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {TicketTypeMapper.class})
 public interface EventMapper {
     EventResponse toEventResponse(Event event);
     Event toEvent(EventRequest request);
-
-    //Ánh xạ loại vé và tính toán số lượng còn lại
-    @Mapping(target = "eventId", source = "event.id")
-    @Mapping(target = "availableQuantity", expression =
-            "java(ticketType.getTotalQuantity() - ticketType.getSoldQuantity())")
-    TicketResponse toTicketResponse(TicketType ticketType);
-    TicketType toTicketType(TicketRequest request);
 
     //Thiết lập liên kết ngược lại từ con trỏ về cha trước khi lưu
     @AfterMapping

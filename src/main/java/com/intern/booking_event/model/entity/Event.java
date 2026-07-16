@@ -36,6 +36,6 @@ public class Event {
     @Column(nullable = false)
     private String organizer;
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "event", cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private List<TicketType> ticketTypes;
 }
