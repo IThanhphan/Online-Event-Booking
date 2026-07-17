@@ -10,8 +10,6 @@ import org.mapstruct.Mapping;
 public interface TicketTypeMapper {
 
     @Mapping(target = "eventId", source = "event.id")
-    @Mapping(target = "availableQuantity", expression =
-            "java(ticketType.getTotalQuantity() - ticketType.getSoldQuantity())")
     TicketResponse toTicketResponse(TicketType ticketType);
 
     TicketType toTicketType(TicketRequest request);

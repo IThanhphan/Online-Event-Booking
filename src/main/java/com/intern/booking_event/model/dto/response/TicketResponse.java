@@ -15,5 +15,4 @@ public class TicketResponse {
     private BigDecimal price;
     private int totalQuantity;
     private int soldQuantity;
-    private int availableQuantity; // Trường tính toán nhanh: totalQuantity - soldQuantity
 }

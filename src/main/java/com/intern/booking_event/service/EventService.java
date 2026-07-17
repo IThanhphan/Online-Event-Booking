@@ -11,6 +11,7 @@ import java.time.Instant;
 public interface EventService {
     EventResponse createEvent(EventRequest request);
     Page<EventResponse> getEvent(String title, String category, String venue,
-                                 Instant startDate, Instant endDate, Pageable pageable);
+                                 Instant startDate, Instant endDate,
+                                 int page, int size, String sortBy, String sortDir);
     EventResponse getEventById(Long id);
 }

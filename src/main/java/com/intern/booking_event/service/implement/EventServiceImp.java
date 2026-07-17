@@ -11,7 +11,9 @@ import com.intern.booking_event.service.EventService;
 import com.intern.booking_event.service.TicketTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,29 +51,13 @@ public class EventServiceImp implements EventService {
     @Override
     @Transactional(readOnly = true)
     public Page<EventResponse> getEvent(String title, String category, String venue,
-                                        Instant startDate, Instant endDate, Pageable pageable) {
-        Specification<Event> spec = (root, query, cb) -> cb.conjunction();
-        if (title != null && !title.trim().isEmpty()) {
-            spec = spec.and((root, query, cb)
-                    -> cb.like(cb.lower(root.get("title")), "%" + title.trim().toLowerCase() + "%"));
-        }
-        if (category != null && !category.trim().isEmpty()) {
-            spec = spec.and((root, query, cb)
-                    -> cb.equal(root.get("category"), category.trim()));
-        }
-        if (venue != null && !venue.trim().isEmpty()) {
-            spec = spec.and((root, query, cb)
-                    -> cb.like(cb.lower(root.get("venue")), "%" + venue.trim().toLowerCase() + "%"));
-        }
-        if (startDate != null) {
-            spec = spec.and((root, query, cb)
-                    -> cb.greaterThanOrEqualTo(root.get("startTime"), startDate));
-        }
-        if (endDate != null) {
-            spec = spec.and((root, query, cb)
-                    -> cb.lessThanOrEqualTo(root.get("startTime"), endDate));
-        }
-        return eventRepository.findAll(spec, pageable).map(eventMapper::toEventResponse);
+                                        Instant startDate, Instant endDate,
+                                        int page, int size, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return eventRepository.searchEvents(title, category, venue, startDate, endDate, pageable)
+                .map(eventMapper::toEventResponse);
     }
 
     @Override

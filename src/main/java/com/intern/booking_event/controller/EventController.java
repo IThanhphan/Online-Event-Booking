@@ -37,17 +37,13 @@ public class EventController {
             @RequestParam(required = false) Instant endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "startTime") String sortBy,
+            @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ?
-                Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-
-        // Xây dựng đối tượng phân trang (Pageable)
-        Pageable pageable = PageRequest.of(page, size, sort);
 
         return ApiResponse.<Page<EventResponse>>builder()
-                .result(eventService.getEvent(title, category, venue, startDate, endDate, pageable))
+                .result(eventService.getEvent(title, category, venue, startDate, endDate,
+                        page, size, sortBy, sortDir))
                 .build();
     }
 
