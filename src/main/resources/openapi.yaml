@@ -1,0 +1,327 @@
+openapi: 3.0.3
+info:
+  title: Online Event Booking API
+  description: Tài liệu Swagger phục vụ kiểm thử các API quản lý sự kiện, loại vé và đặt chỗ.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api
+    description: Local Development Server (Có context-path)
+paths:
+  /events:
+    post:
+      tags:
+        - Event Management
+      summary: Tạo sự kiện mới và loại vé đi kèm
+      description: Tạo sự kiện mới và liên kết các loại vé (TicketType) đi kèm sự kiện đó trong cùng một phiên giao dịch (Transaction).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+      responses:
+        '200':
+          description: Tạo sự kiện thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseEventResponse'
+    get:
+      tags:
+        - Event Management
+      summary: Tìm kiếm và phân trang sự kiện
+      description: Lấy danh sách các sự kiện kèm theo loại vé, hỗ trợ tìm kiếm động theo tiêu đề, danh mục, địa điểm và thời gian, kết hợp phân trang và sắp xếp.
+      parameters:
+        - name: title
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Tiêu đề sự kiện cần tìm kiếm (gần đúng)
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Danh mục sự kiện
+        - name: venue
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Địa điểm tổ chức sự kiện
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Thời gian bắt đầu (từ thời điểm này trở đi)
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Thời gian kết thúc (đến thời điểm này trở về trước)
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Chỉ số trang cần lấy (bắt đầu từ 0)
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+          description: Số lượng phần tử trên mỗi trang
+        - name: sortBy
+          in: query
+          required: false
+          schema:
+            type: string
+            default: id
+          description: Thuộc tính của Event để sắp xếp (ví dụ id, startTime, title)
+        - name: sortDir
+          in: query
+          required: false
+          schema:
+            type: string
+            default: asc
+          description: Hướng sắp xếp (asc hoặc desc)
+      responses:
+        '200':
+          description: Lấy danh sách thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePageEventResponse'
+
+  /events/{id}:
+    get:
+      tags:
+        - Event Management
+      summary: Xem chi tiết sự kiện theo ID
+      description: Lấy thông tin chi tiết của một sự kiện cụ thể cùng danh sách các loại vé đi kèm của nó.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID của sự kiện cần lấy thông tin
+      responses:
+        '200':
+          description: Tìm thấy sự kiện
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseEventResponse'
+
+components:
+  schemas:
+    EventRequest:
+      type: object
+      required:
+        - title
+        - category
+        - venue
+        - startTime
+        - organizer
+        - ticketTypes
+      properties:
+        title:
+          type: string
+          example: "Music Concert 2026"
+        description:
+          type: string
+          example: "Đại nhạc hội Pop mùa hè hoành tráng"
+        category:
+          type: string
+          example: "MUSIC"
+        venue:
+          type: string
+          example: "Sân vận động Mỹ Đình"
+        startTime:
+          type: string
+          format: date-time
+          example: "2026-08-15T19:30:00Z"
+        organizer:
+          type: string
+          example: "V-Pop Center"
+        ticketTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketRequest'
+
+    TicketRequest:
+      type: object
+      required:
+        - name
+        - price
+        - totalQuantity
+      properties:
+        name:
+          type: string
+          example: "VIP Ticket"
+        price:
+          type: number
+          format: double
+          example: 1500000.00
+        totalQuantity:
+          type: integer
+          example: 100
+
+    EventResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Music Concert 2026"
+        description:
+          type: string
+          example: "Đại nhạc hội Pop mùa hè hoành tráng"
+        category:
+          type: string
+          example: "MUSIC"
+        venue:
+          type: string
+          example: "Sân vận động Mỹ Đình"
+        startTime:
+          type: string
+          format: date-time
+          example: "2026-08-15T19:30:00Z"
+        organizer:
+          type: string
+          example: "V-Pop Center"
+        ticketTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketResponse'
+
+    TicketResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        eventId:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: "VIP Ticket"
+        price:
+          type: number
+          format: double
+          example: 1500000.00
+        totalQuantity:
+          type: integer
+          example: 100
+        soldQuantity:
+          type: integer
+          example: 0
+
+    ApiResponseEventResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          $ref: '#/components/schemas/EventResponse'
+
+    ApiResponsePageEventResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          $ref: '#/components/schemas/PageEventResponse'
+
+    PageEventResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventResponse'
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
+        totalPages:
+          type: integer
+          example: 3
+        totalElements:
+          type: integer
+          example: 11
+        last:
+          type: boolean
+          example: false
+        size:
+          type: integer
+          example: 5
+        number:
+          type: integer
+          example: 0
+        sort:
+          $ref: '#/components/schemas/SortObject'
+        numberOfElements:
+          type: integer
+          example: 5
+        first:
+          type: boolean
+          example: true
+        empty:
+          type: boolean
+          example: false
+
+    PageableObject:
+      type: object
+      properties:
+        pageNumber:
+          type: integer
+          example: 0
+        pageSize:
+          type: integer
+          example: 5
+        sort:
+          $ref: '#/components/schemas/SortObject'
+        offset:
+          type: integer
+          example: 0
+        paged:
+          type: boolean
+          example: true
+        unpaged:
+          type: boolean
+          example: false
+
+    SortObject:
+      type: object
+      properties:
+        empty:
+          type: boolean
+          example: false
+        sorted:
+          type: boolean
+          example: true
+        unsorted:
+          type: boolean
+          example: false
