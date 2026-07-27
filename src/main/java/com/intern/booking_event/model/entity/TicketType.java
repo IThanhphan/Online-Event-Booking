@@ -37,7 +37,7 @@ public class TicketType {
     @Column(nullable = false)
     private String name; 
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
 
     @Column(name = "total_quantity", nullable = false)
