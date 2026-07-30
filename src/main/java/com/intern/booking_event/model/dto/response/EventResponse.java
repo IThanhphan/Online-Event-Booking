@@ -2,7 +2,6 @@ package com.intern.booking_event.model.dto.response;
 
 import lombok.*;
 import java.time.Instant;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -16,5 +15,4 @@ public class EventResponse {
     private String venue;
     private Instant startTime;
     private String organizer;
-    private List<TicketResponse> ticketTypes;
 }
