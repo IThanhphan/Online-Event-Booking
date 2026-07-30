@@ -1,9 +1,22 @@
 package com.intern.booking_event.service.implement;
 
 import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
+import com.intern.booking_event.exception.AppException;
+import com.intern.booking_event.exception.ErrorCode;
+import com.intern.booking_event.model.dto.request.BookingRequest;
+import com.intern.booking_event.model.entity.Customer;
+import com.intern.booking_event.model.entity.TicketType;
+import com.intern.booking_event.repository.CustomerRepository;
+import com.intern.booking_event.repository.TicketTypeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +45,76 @@ public class BookingServiceImp implements BookingService {
     private final RefundService refundService;
     private final BookingMapper bookingMapper;
     private final PdfGeneratorService pdfGeneratorService;
+    private final CustomerRepository  customerRepository;
+    private final TicketTypeRepository ticketTypeRepository;
+
+    @Override
+    @Transactional
+    public BookingResponse booking(BookingRequest request) {
+        // Tìm kiếm khác hàng đã tồn tại
+        Customer customer = customerRepository.findById(request.getCustomerId())
+                .orElseThrow(() -> new AppException(ErrorCode.CUSTOMER_NOT_FOUND));
+
+        // Tạo thông tin booking
+        Booking booking = Booking.builder()
+                .reference(generateBookingReference())
+                .customer(customer)
+                .status(BookingStatus.PENDING)
+                .createdAt(Instant.now())
+                .build();
+
+        List<BookingItem> bookingItems = new ArrayList<>();
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (BookingRequest.ItemRequest item : request.getItems()) {
+            TicketType ticketType = ticketTypeRepository.findByIdForUpdate(item.getTicketTypeId())
+                    .orElseThrow(() -> new AppException(ErrorCode.TICKET_TYPE_NOT_FOUND));
+
+            int available = ticketType.getTotalQuantity() - ticketType.getSoldQuantity();
+
+            if (available < item.getQuantity()) {
+                throw new AppException(ErrorCode.OUT_OF_STOCK);
+            }
+
+            ticketType.setSoldQuantity(ticketType.getSoldQuantity() + item.getQuantity());
+
+            BookingItem bookingItem = BookingItem.builder()
+                    .booking(booking)
+                    .ticketType(ticketType)
+                    .quantity(item.getQuantity())
+                    .unitPrice(ticketType.getPrice())
+                    .build();
+
+            bookingItems.add(bookingItem);
+
+            BigDecimal subTotal = ticketType.getPrice()
+                    .multiply(BigDecimal.valueOf(item.getQuantity()));
+
+            totalAmount = totalAmount.add(subTotal);
+        }
+
+        booking.setTotalAmount(totalAmount);
+        booking.setItems(bookingItems);
+
+        Booking savedBooking = bookingRepository.save(booking);
+
+        return BookingResponse.builder()
+                .id(savedBooking.getId())
+                .status(savedBooking.getStatus().toString())
+                .totalAmount(savedBooking.getTotalAmount())
+                .build();
+    }
+
+    private String generateBookingReference() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
+
+        String timestamp = LocalDateTime.now().format(formatter);
+
+        int random = ThreadLocalRandom.current().nextInt(1000, 10000);
+
+        return "BK-" + timestamp + "-" + random;
+    }
 
     @Override
     @Transactional

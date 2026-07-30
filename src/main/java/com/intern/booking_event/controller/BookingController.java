@@ -2,14 +2,12 @@ package com.intern.booking_event.controller;
 
 import java.io.ByteArrayInputStream;
 
+import com.intern.booking_event.model.dto.request.BookingRequest;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.intern.booking_event.model.dto.response.ApiResponse;
 import com.intern.booking_event.model.dto.response.BookingResponse;
@@ -29,6 +27,13 @@ import lombok.RequiredArgsConstructor;
 public class BookingController {
 
     private final BookingService bookingService;
+
+    @PostMapping
+    public ApiResponse<BookingResponse> booking(@RequestBody BookingRequest bookingRequest) {
+        return ApiResponse.<BookingResponse>builder()
+                .result(bookingService.booking(bookingRequest))
+                .build();
+    }
 
     @PostMapping("/{id}/pay")
     @Operation(summary = "Thanh toán đơn đặt chỗ", description = "Thay đổi trạng thái đơn đặt chỗ sang đã thanh toán")

@@ -2,6 +2,7 @@ package com.intern.booking_event.service;
 
 import java.io.ByteArrayInputStream;
 
+import com.intern.booking_event.model.dto.request.BookingRequest;
 import com.intern.booking_event.model.dto.response.BookingResponse;
 
 public interface BookingService {
@@ -11,4 +12,6 @@ public interface BookingService {
     BookingResponse cancelBooking(Long id);
     // API Controller: /api/bookings/{id}/confirmation
     ByteArrayInputStream confirmBooking(Long id);
+    // API Controller: /api/bookings
+    BookingResponse booking(BookingRequest request);
 }

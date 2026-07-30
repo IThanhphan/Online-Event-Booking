@@ -95,7 +95,7 @@ components:
           example: "Success"
         result:
           $ref: '#/components/schemas/BookingResponse'
-          
+
     BookingResponse:
       type: object
       properties:

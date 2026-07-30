@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
@@ -23,4 +25,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Booking b SET b.status = :laterStatus WHERE b.id = :id AND b.status = :firstStatus")
     int updateStatus(@Param("id") Long id, @Param("firstStatus") BookingStatus firstStatus, @Param("laterStatus") BookingStatus laterStatus);
+
+    @Query("SELECT b FROM Booking b WHERE b.customer.id = :customerId")
+    List<Booking> findAllByCustomerId(Long customerId);
 }
