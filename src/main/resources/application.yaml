@@ -19,8 +19,12 @@ spring:
         format_sql: true
 
   ai:
-    anthropic:
-      api-key: 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
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY:AIzaSy_DAP_KEY_GEMINI_CUA_BAN_VAO_DAY}
+        chat:
+          options:
+            model: gemini-1.5-flash # Model tốc độ cao, hoàn toàn miễn phí
   flyway:
     enabled: true
     locations: classpath:db/migration

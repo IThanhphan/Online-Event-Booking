@@ -4,13 +4,16 @@ import java.io.ByteArrayInputStream;
 
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.intern.booking_event.model.dto.request.BookingRequest;
 import com.intern.booking_event.model.dto.response.ApiResponse;
 import com.intern.booking_event.model.dto.response.BookingResponse;
 import com.intern.booking_event.service.BookingService;
@@ -20,6 +23,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -30,6 +34,17 @@ public class BookingController {
 
     private final BookingService bookingService;
 
+    @PostMapping
+    @Operation(summary = "Tạo đơn đặt vé mới (Reserve Inventory)", 
+               description = "Khởi tạo đơn đặt vé, tự động trừ kho số lượng vé và trả về thông tin đơn PENDING")
+    public ResponseEntity<ApiResponse<BookingResponse>> createBooking(@Valid @RequestBody BookingRequest request) {
+        BookingResponse response = bookingService.createBooking(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.<BookingResponse>builder()
+                        .result(response)
+                        .build());
+    }
+    
     @PostMapping("/{id}/pay")
     @Operation(summary = "Thanh toán đơn đặt chỗ", description = "Thay đổi trạng thái đơn đặt chỗ sang đã thanh toán")
     public ApiResponse<BookingResponse> payBooking(

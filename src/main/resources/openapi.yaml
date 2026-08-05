@@ -1,18 +1,24 @@
 openapi: 3.0.3
 info:
-  title: Online Event Booking API
-  description: Tài liệu Swagger phục vụ kiểm thử các API quản lý sự kiện, loại vé và đặt chỗ.
+  title: Online Event Booking & Ticketing Platform API
+  description: |
+    Tài liệu đặc tả RESTful API tổng thể cho hệ thống đặt vé sự kiện trực tuyến (Event Booking Platform).
+    Bao gồm các phân hệ: Quản lý sự kiện, Loại vé & Kho hàng, Đặt vé & Thanh toán, Khách hàng, Trợ lý AI Assistant (Search & Q&A).
   version: 1.0.0
 servers:
   - url: http://localhost:8080/api
-    description: Local Development Server (Có context-path)
+    description: Local Development Server (Spring Boot)
+
 paths:
+  # ==========================================
+  # PHÂN HỆ 1: QUẢN LÝ SỰ KIỆN (EVENTS)
+  # ==========================================
   /events:
     post:
       tags:
-        - Event Management
-      summary: Tạo sự kiện mới và loại vé đi kèm
-      description: Tạo sự kiện mới và liên kết các loại vé (TicketType) đi kèm sự kiện đó trong cùng một phiên giao dịch (Transaction).
+        - Event Management (F1)
+      summary: Tạo sự kiện mới kèm các loại vé (Organizers)
+      description: Tạo một sự kiện mới bao gồm thông tin chi tiết và danh sách các loại vé đi kèm.
       requestBody:
         required: true
         content:
@@ -20,81 +26,75 @@ paths:
             schema:
               $ref: '#/components/schemas/EventRequest'
       responses:
-        '200':
+        '201':
           description: Tạo sự kiện thành công
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponseEventResponse'
+
     get:
       tags:
-        - Event Management
-      summary: Tìm kiếm và phân trang sự kiện
-      description: Lấy danh sách các sự kiện kèm theo loại vé, hỗ trợ tìm kiếm động theo tiêu đề, danh mục, địa điểm và thời gian, kết hợp phân trang và sắp xếp.
+        - Event Management (F1, F3)
+      summary: Duyệt và tìm kiếm danh sách sự kiện (Phân trang)
+      description: Tìm kiếm sự kiện theo từ khóa, danh mục, địa điểm và khoảng thời gian với kết quả phân trang.
       parameters:
         - name: title
           in: query
           required: false
           schema:
             type: string
-          description: Tiêu đề sự kiện cần tìm kiếm (gần đúng)
         - name: category
           in: query
           required: false
           schema:
             type: string
-          description: Danh mục sự kiện
+            enum: [MUSIC, SPORTS, THEATRE, CONFERENCE]
         - name: venue
           in: query
           required: false
           schema:
             type: string
-          description: Địa điểm tổ chức sự kiện
         - name: startDate
           in: query
           required: false
           schema:
             type: string
             format: date-time
-          description: Thời gian bắt đầu (từ thời điểm này trở đi)
         - name: endDate
           in: query
           required: false
           schema:
             type: string
             format: date-time
-          description: Thời gian kết thúc (đến thời điểm này trở về trước)
         - name: page
           in: query
           required: false
           schema:
             type: integer
             default: 0
-          description: Chỉ số trang cần lấy (bắt đầu từ 0)
         - name: size
           in: query
           required: false
           schema:
             type: integer
             default: 10
-          description: Số lượng phần tử trên mỗi trang
         - name: sortBy
           in: query
           required: false
           schema:
             type: string
             default: id
-          description: Thuộc tính của Event để sắp xếp (ví dụ id, startTime, title)
         - name: sortDir
           in: query
           required: false
           schema:
             type: string
+            enum: [asc, desc]
             default: asc
-          description: Hướng sắp xếp (asc hoặc desc)
       responses:
         '200':
-          description: Lấy danh sách thành công
+          description: Lấy danh sách sự kiện thành công
           content:
             application/json:
               schema:
@@ -103,9 +103,8 @@ paths:
   /events/{id}:
     get:
       tags:
-        - Event Management
-      summary: Xem chi tiết sự kiện theo ID
-      description: Lấy thông tin chi tiết của một sự kiện cụ thể cùng danh sách các loại vé đi kèm của nó.
+        - Event Management (F1)
+      summary: Lấy thông tin chi tiết một sự kiện bằng ID
       parameters:
         - name: id
           in: path
@@ -113,125 +112,200 @@ paths:
           schema:
             type: integer
             format: int64
-          description: ID của sự kiện cần lấy thông tin
       responses:
         '200':
-          description: Tìm thấy sự kiện
+          description: Tìm thấy sự kiện thành công
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponseEventResponse'
+        '404':
+          description: Không tìm thấy sự kiện
 
+  # ==========================================
+  # PHÂN HỆ 2: ĐẶT VÉ & LÒNG VÒNG ĐỜI (BOOKINGS)
+  # ==========================================
+  /bookings:
+    post:
+      tags:
+        - Booking Flow (F4, F5)
+      summary: Tạo đơn đặt vé mới (Giữ vé / Reserve Inventory)
+      description: Đặt vé cho sự kiện. Hệ thống thực hiện trừ số lượng kho atomic để chống overselling và chuyển đơn sang PENDING.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequest'
+      responses:
+        '201':
+          description: Đặt vé thành công (Trạng thái PENDING)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseBookingResponse'
+
+  /bookings/{id}/pay:
+    post:
+      tags:
+        - Booking Flow (F5)
+      summary: Mô phỏng thanh toán (Mô phỏng Chuyển PENDING -> PAID -> CONFIRMED)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Thanh toán đơn thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseBookingResponse'
+
+  /bookings/{id}/cancel:
+    post:
+      tags:
+        - Booking Flow (F5)
+      summary: Hủy đơn đặt vé và hoàn trả số lượng vé về kho
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Hủy đơn đặt vé thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseBookingResponse'
+
+  /bookings/{id}/confirmation:
+    get:
+      tags:
+        - Booking Confirmation (F6)
+      summary: Xuất và tải về hóa đơn xác nhận dạng file PDF
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Xuất hóa đơn PDF thành công
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  # ==========================================
+  # PHÂN HỆ 3: KHÁCH HÀNG (CUSTOMERS)
+  # ==========================================
+  /customers:
+    post:
+      tags:
+        - Customer Accounts (F7)
+      summary: Đăng ký tài khoản khách hàng mới
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerRequest'
+      responses:
+        '201':
+          description: Đăng ký khách hàng thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseCustomerResponse'
+
+  /customers/{id}/bookings:
+    get:
+      tags:
+        - Customer Accounts (F7)
+      summary: Xem lịch sử danh sách đơn đặt vé của một khách hàng
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Lấy danh sách lịch sử đặt vé thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseListBookingResponse'
+
+  # ==========================================
+  # PHÂN HỆ 4: TRỢ LÝ AI ASSISTANT (F8 & F9)
+  # ==========================================
+  /assistant/search:
+    post:
+      tags:
+        - AI Assistant (F8)
+      summary: AI Tìm kiếm sự kiện bằng câu văn ngôn ngữ tự nhiên
+      description: Nhận câu thoại tự nhiên của khách hàng (VD:"Tìm concert Sơn Tùng ở Hà Nội dưới 500k"), AI bóc tách tiêu chí lọc và trả về danh sách sự kiện phân trang.
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: "Tìm cho anh concert âm nhạc ở Hà Nội cuối tuần giá dưới 500k"
+      responses:
+        '200':
+          description: AI phân tích và trả về danh sách sự kiện phù hợp
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePageEventResponse'
+
+  /events/{id}/ask:
+    post:
+      tags:
+        - AI Assistant (F9)
+      summary: AI Hỏi & Đáp thắc mắc về một sự kiện cụ thể
+      description: Trả lời thắc mắc của khách hàng dựa trên ngữ cảnh Description của sự kiện ID tương ứng.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: "Sự kiện này có chỗ đỗ xe ô tô không em?"
+      responses:
+        '200':
+          description: Trả lời thắc mắc thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseString'
+
+# ==========================================
+# CÁC DTO / SCHEMAS CHI TIẾT
+# ==========================================
 components:
   schemas:
-    EventRequest:
-      type: object
-      required:
-        - title
-        - category
-        - venue
-        - startTime
-        - organizer
-        - ticketTypes
-      properties:
-        title:
-          type: string
-          example: "Music Concert 2026"
-        description:
-          type: string
-          example: "Đại nhạc hội Pop mùa hè hoành tráng"
-        category:
-          type: string
-          example: "MUSIC"
-        venue:
-          type: string
-          example: "Sân vận động Mỹ Đình"
-        startTime:
-          type: string
-          format: date-time
-          example: "2026-08-15T19:30:00Z"
-        organizer:
-          type: string
-          example: "V-Pop Center"
-        ticketTypes:
-          type: array
-          items:
-            $ref: '#/components/schemas/TicketRequest'
-
-    TicketRequest:
-      type: object
-      required:
-        - name
-        - price
-        - totalQuantity
-      properties:
-        name:
-          type: string
-          example: "VIP Ticket"
-        price:
-          type: number
-          format: double
-          example: 1500000.00
-        totalQuantity:
-          type: integer
-          example: 100
-
-    EventResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 1
-        title:
-          type: string
-          example: "Music Concert 2026"
-        description:
-          type: string
-          example: "Đại nhạc hội Pop mùa hè hoành tráng"
-        category:
-          type: string
-          example: "MUSIC"
-        venue:
-          type: string
-          example: "Sân vận động Mỹ Đình"
-        startTime:
-          type: string
-          format: date-time
-          example: "2026-08-15T19:30:00Z"
-        organizer:
-          type: string
-          example: "V-Pop Center"
-        ticketTypes:
-          type: array
-          items:
-            $ref: '#/components/schemas/TicketResponse'
-
-    TicketResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 1
-        eventId:
-          type: integer
-          format: int64
-          example: 1
-        name:
-          type: string
-          example: "VIP Ticket"
-        price:
-          type: number
-          format: double
-          example: 1500000.00
-        totalQuantity:
-          type: integer
-          example: 100
-        soldQuantity:
-          type: integer
-          example: 0
-
+    # --- Wrapper Chuẩn ---
     ApiResponseEventResponse:
       type: object
       properties:
@@ -240,7 +314,7 @@ components:
           example: 1000
         message:
           type: string
-          example: "Thành công"
+          example: "Success"
         result:
           $ref: '#/components/schemas/EventResponse'
 
@@ -252,76 +326,245 @@ components:
           example: 1000
         message:
           type: string
-          example: "Thành công"
+          example: "Success"
         result:
-          $ref: '#/components/schemas/PageEventResponse'
+          type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/EventResponse'
+            totalPages:
+              type: integer
+              example: 1
+            totalElements:
+              type: integer
+              example: 5
+            size:
+              type: integer
+              example: 10
+            number:
+              type: integer
+              example: 0
 
-    PageEventResponse:
+    ApiResponseBookingResponse:
       type: object
       properties:
-        content:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Success"
+        result:
+          $ref: '#/components/schemas/BookingResponse'
+
+    ApiResponseListBookingResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Success"
+        result:
           type: array
           items:
-            $ref: '#/components/schemas/EventResponse'
-        pageable:
-          $ref: '#/components/schemas/PageableObject'
-        totalPages:
-          type: integer
-          example: 3
-        totalElements:
-          type: integer
-          example: 11
-        last:
-          type: boolean
-          example: false
-        size:
-          type: integer
-          example: 5
-        number:
-          type: integer
-          example: 0
-        sort:
-          $ref: '#/components/schemas/SortObject'
-        numberOfElements:
-          type: integer
-          example: 5
-        first:
-          type: boolean
-          example: true
-        empty:
-          type: boolean
-          example: false
+            $ref: '#/components/schemas/BookingResponse'
 
-    PageableObject:
+    ApiResponseCustomerResponse:
       type: object
       properties:
-        pageNumber:
+        code:
           type: integer
-          example: 0
-        pageSize:
-          type: integer
-          example: 5
-        sort:
-          $ref: '#/components/schemas/SortObject'
-        offset:
-          type: integer
-          example: 0
-        paged:
-          type: boolean
-          example: true
-        unpaged:
-          type: boolean
-          example: false
+          example: 1000
+        message:
+          type: string
+          example: "Success"
+        result:
+          $ref: '#/components/schemas/CustomerResponse'
 
-    SortObject:
+    ApiResponseString:
       type: object
       properties:
-        empty:
-          type: boolean
-          example: false
-        sorted:
-          type: boolean
-          example: true
-        unsorted:
-          type: boolean
-          example: false
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Success"
+        result:
+          type: string
+          example: "Dạ sự kiện này có khu vực gửi xe ô tô rộng rãi tại hầm B2 ạ."
+
+    # --- Objects Request & Response ---
+    EventRequest:
+      type: object
+      required:
+        - title
+        - category
+        - venue
+        - startTime
+      properties:
+        title:
+          type: string
+          example: "Hòa nhạc Sơn Tùng M-TP Sky Tour"
+        description:
+          type: string
+          example: "Đêm nhạc hoành tráng đỉnh cao âm thanh ánh sáng."
+        category:
+          type: string
+          example: "MUSIC"
+        venue:
+          type: string
+          example: "Sân vận động Mỹ Đình, Hà Nội"
+        startTime:
+          type: string
+          format: date-time
+          example: "2026-09-15T19:30:00Z"
+        organizer:
+          type: string
+          example: "M-TP Entertainment"
+        ticketTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketTypeRequest'
+
+    EventResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Hòa nhạc Sơn Tùng M-TP Sky Tour"
+        description:
+          type: string
+          example: "Đêm nhạc hoành tráng đỉnh cao âm thanh ánh sáng."
+        category:
+          type: string
+          example: "MUSIC"
+        venue:
+          type: string
+          example: "Sân vận động Mỹ Đình, Hà Nội"
+        startTime:
+          type: string
+          format: date-time
+          example: "2026-09-15T19:30:00Z"
+        organizer:
+          type: string
+          example: "M-TP Entertainment"
+        ticketTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketTypeResponse'
+
+    TicketTypeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Vé VIP"
+        price:
+          type: number
+          example: 1500000.0
+        totalQuantity:
+          type: integer
+          example: 500
+
+    TicketTypeResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        name:
+          type: string
+          example: "Vé VIP"
+        price:
+          type: number
+          example: 1500000.0
+        totalQuantity:
+          type: integer
+          example: 500
+        soldQuantity:
+          type: integer
+          example: 120
+
+    BookingRequest:
+      type: object
+      required:
+        - customerId
+        - items
+      properties:
+        customerId:
+          type: integer
+          format: int64
+          example: 5
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingItemRequest'
+
+    BookingItemRequest:
+      type: object
+      properties:
+        ticketTypeId:
+          type: integer
+          format: int64
+          example: 10
+        quantity:
+          type: integer
+          example: 2
+
+    BookingResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 101
+        reference:
+          type: string
+          example: "BK-20260804-9872"
+        status:
+          type: string
+          example: "CONFIRMED"
+        totalAmount:
+          type: number
+          example: 3000000.0
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-08-04T15:30:00Z"
+
+    CustomerRequest:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+          example: "Nguyễn Văn A"
+        email:
+          type: string
+          example: "nguyenvana@example.com"
+
+    CustomerResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 5
+        name:
+          type: string
+          example: "Nguyễn Văn A"
+        email:
+          type: string
+          example: "nguyenvana@example.com"

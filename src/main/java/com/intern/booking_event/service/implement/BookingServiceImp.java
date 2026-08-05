@@ -1,6 +1,8 @@
 package com.intern.booking_event.service.implement;
 
 import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,10 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.intern.booking_event.constant.BookingStatus;
 import com.intern.booking_event.exception.ResourceNotFoundException;
 import com.intern.booking_event.mapper.BookingMapper;
+import com.intern.booking_event.model.dto.request.BookingRequest;
 import com.intern.booking_event.model.dto.response.BookingResponse;
 import com.intern.booking_event.model.entity.Booking;
 import com.intern.booking_event.model.entity.BookingItem;
+import com.intern.booking_event.model.entity.Customer;
+import com.intern.booking_event.model.entity.TicketType;
 import com.intern.booking_event.repository.BookingRepository;
+import com.intern.booking_event.repository.CustomerRepository;
 import com.intern.booking_event.repository.TicketRepository;
 import com.intern.booking_event.service.BookingService;
 import com.intern.booking_event.service.RefundService;
@@ -28,10 +34,62 @@ import lombok.extern.slf4j.Slf4j;
 public class BookingServiceImp implements BookingService {
 
     private final BookingRepository bookingRepository;
+    private final CustomerRepository customerRepository;
     private final TicketRepository ticketRepository;
     private final RefundService refundService;
     private final BookingMapper bookingMapper;
     private final PdfGeneratorService pdfGeneratorService;
+
+    @Override
+    @Transactional
+    public BookingResponse createBooking(BookingRequest request) {
+        // 1. Kiểm tra sự tồn tại của Customer
+        Customer customer = customerRepository.findById(request.getCustomerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng với ID: " + request.getCustomerId()));
+
+        // 2. Tạo Booking mới ở trạng thái PENDING
+        Booking booking = new Booking();
+        booking.setCustomer(customer);
+        booking.setStatus(BookingStatus.PENDING);
+
+        List<BookingItem> bookingItems = new ArrayList<>();
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        // 3. Kiểm tra kho vé và trừ kho (ItemRequest từ BookingRequest)
+        for (BookingRequest.ItemRequest itemReq : request.getItems()) {
+            TicketType ticketType = ticketRepository.findById(itemReq.getTicketTypeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy loại vé với ID: " + itemReq.getTicketTypeId()));
+
+            int availableQuantity = ticketType.getTotalQuantity() - ticketType.getSoldQuantity();
+            if (availableQuantity < itemReq.getQuantity()) {
+                throw new RuntimeException("Loại vé '" + ticketType.getName() + "' không đủ số lượng khả dụng! Còn lại: " + availableQuantity);
+            }
+
+            // Trừ kho vé
+            ticketType.setSoldQuantity(ticketType.getSoldQuantity() + itemReq.getQuantity());
+            ticketRepository.save(ticketType);
+
+            // Khởi tạo BookingItem
+            BookingItem bookingItem = new BookingItem();
+            bookingItem.setBooking(booking);
+            bookingItem.setTicketType(ticketType);
+            bookingItem.setQuantity(itemReq.getQuantity());
+            bookingItem.setUnitPrice(ticketType.getPrice());
+
+            bookingItems.add(bookingItem);
+
+            // Tính toán tổng tiền
+            BigDecimal itemTotal = ticketType.getPrice().multiply(BigDecimal.valueOf(itemReq.getQuantity()));
+            totalAmount = totalAmount.add(itemTotal);
+        }
+
+        booking.setItems(bookingItems);
+        booking.setTotalAmount(totalAmount);
+
+        // 4. Lưu đơn hàng
+        Booking savedBooking = bookingRepository.save(booking);
+        return bookingMapper.toBookingResponse(savedBooking);
+    }
 
     @Override
     @Transactional
