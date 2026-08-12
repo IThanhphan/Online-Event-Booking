@@ -1,15 +1,14 @@
 package com.intern.booking_event.controller;
 
+import com.intern.booking_event.model.dto.request.AiRequest;
 import com.intern.booking_event.model.dto.request.EventRequest;
+import com.intern.booking_event.model.dto.response.AiResponse;
 import com.intern.booking_event.model.dto.response.ApiResponse;
 import com.intern.booking_event.model.dto.response.EventResponse;
+import com.intern.booking_event.service.AIService;
 import com.intern.booking_event.service.EventService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -20,6 +19,7 @@ import java.time.Instant;
 public class EventController {
 
     private final EventService eventService;
+    private final AIService aiService;
 
     @PostMapping
     public ApiResponse<EventResponse> createEvent(@RequestBody EventRequest request) {
@@ -48,9 +48,18 @@ public class EventController {
     }
 
     @GetMapping("/{id}")
-    private ApiResponse<EventResponse> getEventById(@PathVariable Long id) {
+    public ApiResponse<EventResponse> getEventById(@PathVariable Long id) {
         return ApiResponse.<EventResponse>builder()
                 .result(eventService.getEventById(id))
+                .build();
+    }
+
+    //
+    @PostMapping("/{id}/ask")
+    public ApiResponse<AiResponse> askEventIdWithAi(@PathVariable Long id, @RequestBody AiRequest request) {
+        AiResponse response = aiService.askEventIdWithAi(id,request);
+        return ApiResponse.<AiResponse>builder()
+                .result(response)
                 .build();
     }
 }
