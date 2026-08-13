@@ -1,0 +1,112 @@
+openapi: 3.0.3
+info:
+  title: Online Event Booking - AI Assistant API
+  description: API Trợ lý AI Tìm kiếm Sự kiện và Hỏi đáp Sự kiện.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api
+tags:
+  - name: AI-Assistant
+    description: API Trợ lý AI
+  - name: Event-QA
+    description: API Hỏi đáp Sự kiện
+
+paths:
+  /assistant/search:
+    post:
+      summary: Search with AI
+      description: Search a event with AI
+      operationId: searchEventWithAi
+      tags:
+        - AI-Assistant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiRequest'
+            example:
+              customerId: 1
+              message: "Tìm các sự kiện âm nhạc."
+      responses:
+        '200':
+          description: AI trả lời thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseAiResponse'
+              example:
+                code: 1000
+                message: "Success"
+                result:
+                  response: "Chào bạn! Hiện tại hệ thống có 2 sự kiện âm nhạc..."
+
+  /events/{id}/ask:
+    post:
+      summary: Ask AI about a specific event
+      description: Ask AI about details of a specific event
+      operationId: askEventIdWithAi
+      tags:
+        - Event-QA
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID sự kiện
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiRequest'
+            example:
+              message: "Sự kiện này được tổ chức ở đâu?"
+      responses:
+        '200':
+          description: AI trả lời thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseAiResponse'
+
+components:
+  schemas:
+    AiRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Nội dung câu hỏi gửi cho AI
+          example: "Tìm các sự kiện âm nhạc."
+        customerId:
+          type: integer
+          format: int64
+          description: ID khách hàng (Kiểu Long)
+          example: 1
+    AiResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          description: Văn bản câu trả lời từ AI
+          example: "Chào bạn! Hiện tại hệ thống có 2 sự kiện âm nhạc..."
+    ApiResponseAiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: Mã phản hồi hệ thống (Mặc định 1000)
+          example: 1000
+        message:
+          type: string
+          description: Thông báo hệ thống
+          example: "Success"
+        result:
+          $ref: '#/components/schemas/AiResponse'
