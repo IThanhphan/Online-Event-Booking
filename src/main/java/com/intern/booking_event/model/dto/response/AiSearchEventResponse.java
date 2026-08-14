@@ -1,16 +1,18 @@
 package com.intern.booking_event.model.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class AiResponse {
-    private Object response;
+public class AiSearchEventResponse {
+    private String type;
+    private String message;
+    private List<EventResponse> events;
 }
