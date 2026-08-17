@@ -24,10 +24,10 @@ public class AiServiceImp implements AIService {
     private final CustomerRepository customerRepository;
     private final EventService eventService;
 
-    public AiServiceImp(ChatClient.Builder chatClientBuilder, EventRepository eventRepository, CustomerRepository customerRepository, CustomerRepository customerRepository1, EventService eventService) {
+    public AiServiceImp(ChatClient.Builder chatClientBuilder, EventRepository eventRepository, CustomerRepository customerRepository, EventService eventService) {
         this.chatClient = chatClientBuilder.build();
         this.eventRepository = eventRepository;
-        this.customerRepository = customerRepository1;
+        this.customerRepository = customerRepository;
         this.eventService = eventService;
     }
 
