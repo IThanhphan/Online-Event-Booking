@@ -10,14 +10,23 @@ import com.intern.booking_event.repository.CustomerRepository;
 import com.intern.booking_event.repository.EventRepository;
 import com.intern.booking_event.service.AIService;
 import com.intern.booking_event.service.EventService;
+import lombok.SneakyThrows;
+import org.springframework.core.io.Resource;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Service
 public class AiServiceImp implements AIService {
+
+    @Value("${spring.ai.prompt.search-events}")
+    private Resource searchPrompt;
+    @Value("${spring.ai.prompt.ask-events}")
+    private Resource askPrompt;
 
     private final ChatClient chatClient;
     private final EventRepository eventRepository;
@@ -31,6 +40,7 @@ public class AiServiceImp implements AIService {
         this.eventService = eventService;
     }
 
+    @SneakyThrows
     @Override
     @Transactional(readOnly = true)
     public AiResponse searchEventWithAi(AiRequest request) {
@@ -43,25 +53,9 @@ public class AiServiceImp implements AIService {
             }
         }
 
-        String sysPrompt = """
-                Bạn là Trợ lý AI chính thức của "Online Event Booking".
-                NGƯỜI DÙNG: %s | DỮ LIỆU CƠ SỞ DỮ LIỆU: %s
+        String promptTemplate= searchPrompt.getContentAsString(StandardCharsets.UTF_8);
 
-                QUY TẮC PHẢN HỒI (BẮT BUỘC CHỈ TRẢ VỀ CÚ PHÁP JSON HỢP LỆ):
-                1. LỌC THEO THỂ LOẠI (CATEGORY):
-                   - "âm nhạc/music": CHỈ lấy sự kiện có category là MUSIC. (KHÔNG lấy ART/FOOD dù địa điểm ghi Opera House).
-                   - "đồ ăn/food": CHỈ lấy sự kiện có category là FOOD.
-                   - "tranh/nghệ thuật/art": CHỈ lấy sự kiện có category là ART.
-
-                2. TÌM THẤY SỰ KIỆN:
-                   type: "EVENT_SEARCH", message: "Xin chào [Tên], tìm thấy X sự kiện phù hợp.", events: [{id, title, category, venue, startTime, organizer, description}]
-
-                3. KHÔNG TÌM THẤY SỰ KIỆN KHỚP:
-                   type: "EVENT_SEARCH", message: "Xin lỗi, không tìm thấy sự kiện nào phù hợp.", events: []
-
-                4. HỎI BẠN LÀ AI:
-                   type: "SYSTEM_INFO", message: "Tôi là trợ lý AI của dự án Online Event Booking.", events: []
-                """.formatted(customerInfo.isEmpty() ? "Khách hàng" : customerInfo, eventContext);
+        String sysPrompt = promptTemplate.formatted(customerInfo.isEmpty() ? "Khách Hàng" : customerInfo,eventContext);
 
         AiSearchEventResponse aiResult = chatClient.prompt()
                 .system(sysPrompt)
@@ -74,6 +68,7 @@ public class AiServiceImp implements AIService {
                 .build();
     }
 
+    @SneakyThrows
     @Override
     public AiResponse askEventIdWithAi(Long eventId, AiRequest request) {
         EventResponse event = eventService.getEventById(eventId);
@@ -94,17 +89,9 @@ public class AiServiceImp implements AIService {
                 event.getDescription() != null ? event.getDescription() : "Không có"
         );
 
-        String sysPrompt = """
-                Bạn là Trợ lý AI thông minh phụ trách giải đáp thắc mắc cho sự kiện cụ thể "%s" (thuộc hệ thống Online Event Booking).
+        String promptTemplate= askPrompt.getContentAsString(StandardCharsets.UTF_8);
 
-                THÔNG TIN CHI TIẾT VỀ SỰ KIỆN NÀY:
-                %s
-
-                HƯỚNG DẪN PHẢN HỒI:
-                1. Dựa vào THÔNG TIN CHI TIẾT trên để giải đáp thắc mắc của người dùng về sự kiện này.
-                2. Hãy trả lời bằng văn bản tự nhiên, thân thiện, ngắn gọn và chính xác. Không cần trả về JSON.
-                3. Nếu câu hỏi của người dùng không liên quan đến sự kiện này, hãy nhắc nhở lịch sự.
-                """.formatted(event.getTitle(), eventContext);
+        String sysPrompt = promptTemplate.formatted(event.getTitle(), eventContext);
 
         String aiResult = chatClient.prompt()
                 .system(sysPrompt)
@@ -125,19 +112,12 @@ public class AiServiceImp implements AIService {
 
         StringBuilder stringBuilder = new StringBuilder();
         for (Event event : events) {
-            String categoryFriendly = event.getCategory();
-            if ("FOOD".equalsIgnoreCase(event.getCategory())) {
-                categoryFriendly = "FOOD (Ẩm thực, Đồ ăn, Món ăn)";
-            } else if ("MUSIC".equalsIgnoreCase(event.getCategory())) {
-                categoryFriendly = "MUSIC (Âm nhạc, Nhạc, Ca hát, Concert)";
-            } else if ("ART".equalsIgnoreCase(event.getCategory())) {
-                categoryFriendly = "ART (Triển lãm Nghệ thuật, Tranh vẽ, Hội họa)";
-            }
-
-            stringBuilder.append(String.format("- [ID: %d] Tên sự kiện: %s\n  + Thể loại: %s\n  + Địa điểm: %s\n  + Thời gian: %s\n  + Ban tổ chức: %s\n  + Mô tả: %s\n\n",
-                    event.getId(), event.getTitle(), categoryFriendly,
+            stringBuilder.append(String.format(
+                    "- [ID: %d] Tên sự kiện: %s\n  + Thể loại (Categories): %s\n  + Địa điểm: %s\n  + Thời gian: %s\n  + Ban tổ chức: %s\n  + Mô tả: %s\n\n",
+                    event.getId(), event.getTitle(), event.getCategory(),
                     event.getVenue(), event.getStartTime(), event.getOrganizer(),
-                    event.getDescription() != null ? event.getDescription() : "Không có"));
+                    event.getDescription() != null ? event.getDescription() : "Không có"
+            ));
         }
         return stringBuilder.toString();
     }

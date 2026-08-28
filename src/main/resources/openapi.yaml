@@ -1,18 +1,276 @@
 openapi: 3.0.3
 info:
   title: Online Event Booking API
-  description: Tài liệu Swagger phục vụ kiểm thử các API quản lý sự kiện, loại vé và đặt chỗ.
+  description: Tài liệu OpenAPI / Swagger hoàn chỉnh cho toàn bộ hệ thống Online Event Booking, tích hợp xác thực JWT và Trợ lý AI.
   version: 1.0.0
 servers:
   - url: http://localhost:8080/api
-    description: Local Development Server (Có context-path)
+    description: Local Development Server (với context-path /api)
+
+tags:
+  - name: Authentication
+    description: Xác thực tài khoản, kiểm tra token và đăng xuất
+  - name: Role Management
+    description: Quản lý các vai trò trong hệ thống (Yêu cầu quyền ADMIN)
+  - name: Permission Management
+    description: Quản lý các quyền hạn chi tiết (Yêu cầu quyền ADMIN)
+  - name: Event Management
+    description: Quản lý, tìm kiếm và xem chi tiết sự kiện
+  - name: Booking Management
+    description: Đặt vé, thanh toán, hủy và xuất hóa đơn PDF
+  - name: Customer Management
+    description: Đăng ký khách hàng và tra cứu lịch sử đặt vé
+  - name: AI Assistant
+    description: Trợ lý AI tìm kiếm và giải đáp thắc mắc về sự kiện
+
 paths:
+  # ================= AUTHENTICATION =================
+  /auth/token:
+    post:
+      tags:
+        - Authentication
+      summary: Đăng nhập lấy JWT Token
+      description: Xác thực tài khoản bằng email và mật khẩu để nhận Access Token.
+      operationId: authenticate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationRequest'
+      responses:
+        '200':
+          description: Đăng nhập thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseAuthenticationResponse'
+
+  /auth/introspect:
+    post:
+      tags:
+        - Authentication
+      summary: Kiểm tra tính hợp lệ của Token
+      description: Kiểm tra xem JWT Token có hợp lệ hoặc đã bị vô hiệu hóa (logout) hay chưa.
+      operationId: introspect
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntrospectRequest'
+      responses:
+        '200':
+          description: Kết quả kiểm tra token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseIntrospectResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Đăng xuất tài khoản
+      description: Vô hiệu hóa JWT Token hiện tại và lưu vào danh sách Blacklist.
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '200':
+          description: Đăng xuất thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseVoid'
+
+  # ================= ROLES =================
+  /roles:
+    post:
+      tags:
+        - Role Management
+      summary: Tạo vai trò mới
+      description: Tạo mới một vai trò và gán danh sách quyền đi kèm (Yêu cầu ADMIN).
+      operationId: createRole
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+      responses:
+        '200':
+          description: Tạo vai trò thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseRoleResponse'
+    get:
+      tags:
+        - Role Management
+      summary: Lấy danh sách tất cả vai trò
+      description: Lấy danh sách toàn bộ các vai trò và quyền hạn tương ứng (Yêu cầu ADMIN).
+      operationId: getAllRoles
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Danh sách vai trò
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseListRoleResponse'
+
+  /roles/{role}:
+    delete:
+      tags:
+        - Role Management
+      summary: Xóa một vai trò
+      description: Xóa vai trò theo tên mã (Yêu cầu ADMIN).
+      operationId: deleteRole
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: role
+          in: path
+          required: true
+          description: Tên vai trò cần xóa (ví dụ ADMIN, USER)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Xóa vai trò thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseVoid'
+
+  # ================= PERMISSIONS =================
+  /permissions:
+    post:
+      tags:
+        - Permission Management
+      summary: Tạo quyền hạn mới
+      description: Tạo mới một quyền hạn trong hệ thống (Yêu cầu ADMIN).
+      operationId: createPermission
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionRequest'
+      responses:
+        '200':
+          description: Tạo quyền hạn thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePermissionResponse'
+    get:
+      tags:
+        - Permission Management
+      summary: Lấy danh sách tất cả quyền hạn
+      description: Lấy danh sách toàn bộ quyền hạn hiện có (Yêu cầu ADMIN).
+      operationId: getAllPermissions
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Danh sách quyền hạn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseListPermissionResponse'
+
+  /permissions/{permission}:
+    delete:
+      tags:
+        - Permission Management
+      summary: Xóa một quyền hạn
+      description: Xóa quyền hạn theo tên mã (Yêu cầu ADMIN).
+      operationId: deletePermission
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: permission
+          in: path
+          required: true
+          description: Tên quyền hạn cần xóa (ví dụ CREATE_EVENT)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Xóa quyền hạn thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseVoid'
+
+  # ================= CUSTOMERS =================
+  /customers:
+    post:
+      tags:
+        - Customer Management
+      summary: Đăng ký tài khoản khách hàng mới
+      description: Tạo mới tài khoản khách hàng với thông tin cơ bản.
+      operationId: registerCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerRequest'
+      responses:
+        '200':
+          description: Đăng ký thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseCustomerResponse'
+
+  /customers/{id}/bookings:
+    get:
+      tags:
+        - Customer Management
+      summary: Xem lịch sử đặt vé của khách hàng
+      description: Lấy danh sách toàn bộ các lượt đặt chỗ của khách hàng theo ID.
+      operationId: getCustomerBookings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID khách hàng
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Danh sách đặt vé của khách hàng
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseListCustomerBookingsResponse'
+
+  # ================= EVENTS =================
   /events:
     post:
       tags:
         - Event Management
       summary: Tạo sự kiện mới và loại vé đi kèm
-      description: Tạo sự kiện mới và liên kết các loại vé (TicketType) đi kèm sự kiện đó trong cùng một phiên giao dịch (Transaction).
+      description: Tạo sự kiện và các loại vé liên kết trong cùng một giao dịch (Yêu cầu ADMIN hoặc quyền CREATE_EVENT).
+      operationId: createEvent
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -30,26 +288,27 @@ paths:
       tags:
         - Event Management
       summary: Tìm kiếm và phân trang sự kiện
-      description: Lấy danh sách các sự kiện kèm theo loại vé, hỗ trợ tìm kiếm động theo tiêu đề, danh mục, địa điểm và thời gian, kết hợp phân trang và sắp xếp.
+      description: Hỗ trợ tìm kiếm theo tiêu đề, thể loại, địa điểm, khoảng thời gian kết hợp phân trang và sắp xếp.
+      operationId: getEvents
       parameters:
         - name: title
           in: query
           required: false
           schema:
             type: string
-          description: Tiêu đề sự kiện cần tìm kiếm (gần đúng)
+          description: Tiêu đề sự kiện cần tìm kiếm
         - name: category
           in: query
           required: false
           schema:
             type: string
-          description: Danh mục sự kiện
+          description: Thể loại sự kiện (MUSIC, TECH, FOOD, ART...)
         - name: venue
           in: query
           required: false
           schema:
             type: string
-          description: Địa điểm tổ chức sự kiện
+          description: Địa điểm tổ chức
         - name: startDate
           in: query
           required: false
@@ -63,28 +322,28 @@ paths:
           schema:
             type: string
             format: date-time
-          description: Thời gian kết thúc (đến thời điểm này trở về trước)
+          description: Thời gian kết thúc
         - name: page
           in: query
           required: false
           schema:
             type: integer
             default: 0
-          description: Chỉ số trang cần lấy (bắt đầu từ 0)
+          description: Số thứ tự trang (bắt đầu từ 0)
         - name: size
           in: query
           required: false
           schema:
             type: integer
             default: 10
-          description: Số lượng phần tử trên mỗi trang
+          description: Số lượng sự kiện trên một trang
         - name: sortBy
           in: query
           required: false
           schema:
             type: string
             default: id
-          description: Thuộc tính của Event để sắp xếp (ví dụ id, startTime, title)
+          description: Trường sắp xếp (id, startTime, title...)
         - name: sortDir
           in: query
           required: false
@@ -94,7 +353,7 @@ paths:
           description: Hướng sắp xếp (asc hoặc desc)
       responses:
         '200':
-          description: Lấy danh sách thành công
+          description: Lấy danh sách sự kiện thành công
           content:
             application/json:
               schema:
@@ -105,25 +364,536 @@ paths:
       tags:
         - Event Management
       summary: Xem chi tiết sự kiện theo ID
-      description: Lấy thông tin chi tiết của một sự kiện cụ thể cùng danh sách các loại vé đi kèm của nó.
+      description: Lấy thông tin chi tiết sự kiện cùng danh sách loại vé còn lại.
+      operationId: getEventById
       parameters:
         - name: id
           in: path
           required: true
+          description: ID của sự kiện
           schema:
             type: integer
             format: int64
-          description: ID của sự kiện cần lấy thông tin
       responses:
         '200':
-          description: Tìm thấy sự kiện
+          description: Lấy chi tiết thành công
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponseEventResponse'
 
+  /events/{id}/ask:
+    post:
+      tags:
+        - AI Assistant
+      summary: Hỏi đáp AI về một sự kiện cụ thể
+      description: Trợ lý AI giải đáp thắc mắc của người dùng dựa trên thông tin chi tiết của sự kiện.
+      operationId: askEventIdWithAi
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID sự kiện
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiRequest'
+      responses:
+        '200':
+          description: AI trả lời thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseAiResponse'
+
+  # ================= BOOKINGS =================
+  /bookings:
+    post:
+      tags:
+        - Booking Management
+      summary: Đặt vé sự kiện
+      description: Tạo đơn đặt vé mới với trạng thái PENDING.
+      operationId: createBooking
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequest'
+      responses:
+        '200':
+          description: Đặt vé thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseBookingResponse'
+
+  /bookings/{id}/pay:
+    post:
+      tags:
+        - Booking Management
+      summary: Thanh toán đơn đặt vé
+      description: Thay đổi trạng thái đơn đặt vé sang PAID.
+      operationId: payBooking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID của đơn đặt chỗ
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Thanh toán thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseBookingResponse'
+
+  /bookings/{id}/cancel:
+    post:
+      tags:
+        - Booking Management
+      summary: Hủy đơn đặt vé
+      description: Hủy đơn đặt chỗ và hoàn lại số lượng vé khả dụng vào kho.
+      operationId: cancelBooking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID của đơn đặt chỗ
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Hủy đơn thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseBookingResponse'
+
+  /bookings/{id}/confirmation:
+    post:
+      tags:
+        - Booking Management
+      summary: Xác nhận và tải file PDF hóa đơn
+      description: Xuất file hóa đơn PDF dạng binary stream trực tiếp để client tải về.
+      operationId: confirmBooking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID của đơn đặt chỗ
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Xuất file PDF thành công
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: attachment; filename=booking_confirmation_1.pdf
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  # ================= AI ASSISTANT =================
+  /assistant/search:
+    post:
+      tags:
+        - AI Assistant
+      summary: Tìm kiếm sự kiện thông minh với AI
+      description: Người dùng nhập câu hỏi bằng ngôn ngữ tự nhiên để AI gợi ý sự kiện phù hợp từ cơ sở dữ liệu.
+      operationId: searchEventsWithAi
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiRequest'
+      responses:
+        '200':
+          description: AI tìm kiếm thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseAiResponse'
+
+# ================= COMPONENTS & SCHEMAS =================
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Nhập JWT Token vào đây (không cần tiền tố Bearer)"
+
   schemas:
+    # Common ApiResponse Wrappers
+    ApiResponseVoid:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+
+    ApiResponseAuthenticationResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          $ref: '#/components/schemas/AuthenticationResponse'
+
+    ApiResponseIntrospectResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          $ref: '#/components/schemas/IntrospectResponse'
+
+    ApiResponseRoleResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          $ref: '#/components/schemas/RoleResponse'
+
+    ApiResponseListRoleResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleResponse'
+
+    ApiResponsePermissionResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          $ref: '#/components/schemas/PermissionResponse'
+
+    ApiResponseListPermissionResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionResponse'
+
+    ApiResponseCustomerResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          $ref: '#/components/schemas/CustomerResponse'
+
+    ApiResponseListCustomerBookingsResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerBookingsResponse'
+
+    ApiResponseEventResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          $ref: '#/components/schemas/EventResponse'
+
+    ApiResponsePageEventResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          $ref: '#/components/schemas/PageEventResponse'
+
+    ApiResponseBookingResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          $ref: '#/components/schemas/BookingResponse'
+
+    ApiResponseAiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 1000
+        message:
+          type: string
+          example: "Thành công"
+        result:
+          type: object
+          description: Kết quả phản hồi từ AI (JSON Object hoặc String)
+
+    # Auth DTOs
+    AuthenticationRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@bookingevent.com
+        password:
+          type: string
+          format: password
+          example: admin123
+
+    AuthenticationResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzUxMiJ9..."
+        authenticated:
+          type: boolean
+          example: true
+
+    IntrospectRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzUxMiJ9..."
+
+    IntrospectResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+          example: true
+
+    LogoutRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzUxMiJ9..."
+
+    # Role & Permission DTOs
+    RoleRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "ADMIN"
+        description:
+          type: string
+          example: "Quản trị viên toàn quyền hệ thống"
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["CREATE_EVENT", "VIEW_REPORT"]
+
+    RoleResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "ADMIN"
+        description:
+          type: string
+          example: "Quản trị viên toàn quyền hệ thống"
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionResponse'
+
+    PermissionRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "CREATE_EVENT"
+        description:
+          type: string
+          example: "Quyền tạo mới sự kiện và loại vé"
+
+    PermissionResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "CREATE_EVENT"
+        description:
+          type: string
+          example: "Quyền tạo mới sự kiện và loại vé"
+
+    # Customer DTOs
+    CustomerRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          example: "Nguyen Van A"
+        email:
+          type: string
+          format: email
+          example: "nguyenvana@gmail.com"
+        password:
+          type: string
+          format: password
+          example: "12345678"
+
+    CustomerResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: "Nguyen Van A"
+        email:
+          type: string
+          example: "nguyenvana@gmail.com"
+
+    CustomerBookingsResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        reference:
+          type: string
+          example: "BK-20260729-0001"
+        status:
+          type: string
+          example: "CONFIRMED"
+        totalAmount:
+          type: number
+          example: 500000.00
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-08-28T09:30:00Z"
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerBookingItemResponse'
+
+    CustomerBookingItemResponse:
+      type: object
+      properties:
+        ticketTypeId:
+          type: integer
+          format: int64
+          example: 2
+        ticketTypeName:
+          type: string
+          example: "VIP Ticket"
+        quantity:
+          type: integer
+          example: 2
+        unitPrice:
+          type: number
+          example: 250000.00
+
+    # Event DTOs
     EventRequest:
       type: object
       required:
@@ -232,30 +1002,6 @@ components:
           type: integer
           example: 0
 
-    ApiResponseEventResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          example: 1000
-        message:
-          type: string
-          example: "Thành công"
-        result:
-          $ref: '#/components/schemas/EventResponse'
-
-    ApiResponsePageEventResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          example: 1000
-        message:
-          type: string
-          example: "Thành công"
-        result:
-          $ref: '#/components/schemas/PageEventResponse'
-
     PageEventResponse:
       type: object
       properties:
@@ -325,3 +1071,65 @@ components:
         unsorted:
           type: boolean
           example: false
+
+    # Booking DTOs
+    BookingRequest:
+      type: object
+      required:
+        - customerId
+        - items
+      properties:
+        customerId:
+          type: integer
+          format: int64
+          example: 1
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/BookingItemRequest'
+
+    BookingItemRequest:
+      type: object
+      required:
+        - ticketTypeId
+        - quantity
+      properties:
+        ticketTypeId:
+          type: integer
+          format: int64
+          example: 2
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+
+    BookingResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        status:
+          type: string
+          example: "PENDING"
+        totalAmount:
+          type: number
+          example: 500000.00
+
+    # AI DTOs
+    AiRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: "Nội dung câu hỏi hoặc yêu cầu gửi AI"
+          example: "Tìm giúp tôi sự kiện âm nhạc diễn ra vào tháng 8"
+        customerId:
+          type: integer
+          format: int64
+          description: "ID khách hàng (nếu đã đăng nhập)"
+          example: 1

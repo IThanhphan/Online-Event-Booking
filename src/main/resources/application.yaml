@@ -19,15 +19,29 @@ spring:
         format_sql: true
 
   ai:
-    anthropic:
-      api-key: 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
+    prompt:
+      search-events: ${AI_PROMPT_SEARCH_EVENT_PATH:classpath:prompts/search-events.st}
+      ask-events: ${AI_PROMPT_ASK_EVENT_PATH:classpath:prompts/ask-event.st}
+    openai:
+      api-key: ${GEMINI_API_KEY}
+      base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta/openai/}
+      chat:
+        options:
+          model: ${GEMINI_MODEL:gemini-1.5-flash}
+          temperature: 0.2
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+jwt:
+  signerKey: "${JWT_SIGNER_KEY:9j8FvKmXz1WbQ2dE5hT6Y7uI8oKpL0mN1aBsCdEfGhI=abcdefghijklmnopqrstuvwxyz123456}"
+  #Thiết lập thời gian của JWT tùy thuộc vào hệ thống
+  valid-duration: 3600 # in second
+  refreshable-duration: 36000 #in second
 
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
-    operationsSorter: method 
+    operationsSorter: method
