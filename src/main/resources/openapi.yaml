@@ -709,8 +709,7 @@ components:
           type: string
           example: "Thành công"
         result:
-          type: object
-          description: Kết quả phản hồi từ AI (JSON Object hoặc String)
+          $ref: '#/components/schemas/AiResponse'
 
     # Auth DTOs
     AuthenticationRequest:
@@ -1133,3 +1132,10 @@ components:
           format: int64
           description: "ID khách hàng (nếu đã đăng nhập)"
           example: 1
+
+    AiResponse:
+      type: object
+      properties:
+        response:
+          description: "Kết quả trả về từ AI (chuỗi văn bản hoặc JSON cấu trúc)"
+          example: "Xin chào! Tôi đã tìm thấy 2 sự kiện âm nhạc..."
