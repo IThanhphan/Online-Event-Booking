@@ -1,18 +1,20 @@
 package com.intern.booking_event.controller;
 
-import com.intern.booking_event.model.dto.request.EventRequest;
-import com.intern.booking_event.model.dto.response.ApiResponse;
-import com.intern.booking_event.model.dto.response.EventResponse;
-import com.intern.booking_event.service.EventService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.time.Instant;
+
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
+import com.intern.booking_event.model.dto.request.AiRequest;
+import com.intern.booking_event.model.dto.request.EventRequest;
+import com.intern.booking_event.model.dto.response.AiResponse;
+import com.intern.booking_event.model.dto.response.ApiResponse;
+import com.intern.booking_event.model.dto.response.EventResponse;
+import com.intern.booking_event.service.AIService;
+import com.intern.booking_event.service.EventService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/events")
@@ -20,8 +22,10 @@ import java.time.Instant;
 public class EventController {
 
     private final EventService eventService;
+    private final AIService aiService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('CREATE_EVENT')")
     public ApiResponse<EventResponse> createEvent(@RequestBody EventRequest request) {
         return ApiResponse.<EventResponse>builder()
                 .result(eventService.createEvent(request))
@@ -40,7 +44,6 @@ public class EventController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
-
         return ApiResponse.<Page<EventResponse>>builder()
                 .result(eventService.getEvent(title, category, venue, startDate, endDate,
                         page, size, sortBy, sortDir))
@@ -48,9 +51,18 @@ public class EventController {
     }
 
     @GetMapping("/{id}")
-    private ApiResponse<EventResponse> getEventById(@PathVariable Long id) {
+    public ApiResponse<EventResponse> getEventById(@PathVariable Long id) {
         return ApiResponse.<EventResponse>builder()
                 .result(eventService.getEventById(id))
+                .build();
+    }
+
+    @PostMapping("/{id}/ask")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<AiResponse> askEventIdWithAi(@PathVariable Long id, @RequestBody AiRequest request) {
+        AiResponse response = aiService.askEventIdWithAi(id, request);
+        return ApiResponse.<AiResponse>builder()
+                .result(response)
                 .build();
     }
 }

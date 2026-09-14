@@ -1,5 +1,6 @@
 package com.intern.booking_event.model.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import java.time.Instant;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class EventResponse {
     private Long id;
     private String title;

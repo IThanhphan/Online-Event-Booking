@@ -13,8 +13,11 @@ import java.util.Optional;
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     
-    // Tra cứu danh tính ngầm hoặc phục vụ xem lịch sử nhanh qua Email
+    // Tra cứu danh tính ngầm hoặc phục vụ xem lịch sử nhanh qua Email kèm roles
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"roles"})
     Optional<Customer> findByEmail(String email);
+
+    boolean existsByEmail(String email);
 
     // Tính năng cho Admin: Tìm kiếm không dấu, đẩy kết quả trùng Email lên ưu tiên số 1
     @Query(
