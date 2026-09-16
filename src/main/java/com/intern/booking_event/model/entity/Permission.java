@@ -13,6 +13,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(of = "name")
 public class Permission {
     @Id
     @Column(name = "name", nullable = false)

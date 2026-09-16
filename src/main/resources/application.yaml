@@ -24,10 +24,11 @@ spring:
       ask-events: ${AI_PROMPT_ASK_EVENT_PATH:classpath:prompts/ask-event.st}
     openai:
       api-key: ${GEMINI_API_KEY}
-      base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta/openai/}
+      base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta/openai}
       chat:
+        completions-path: /chat/completions
         options:
-          model: ${GEMINI_MODEL:gemini-1.5-flash}
+          model: ${GEMINI_MODEL:gemini-3.6-flash}
           temperature: 0.2
   flyway:
     enabled: true

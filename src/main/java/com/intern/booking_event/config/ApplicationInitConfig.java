@@ -35,6 +35,15 @@ public class ApplicationInitConfig {
         return args -> {
             log.info("init ApplicationRunner - Loading permissions, roles, and initializing passwords...");
 
+            // 0. Khởi tạo permission cơ bản nếu CSDL chưa có
+            if (!permissionRepository.existsById("CREATE_EVENT")) {
+                permissionRepository.save(com.intern.booking_event.model.entity.Permission.builder()
+                        .name("CREATE_EVENT")
+                        .description("Quyền tạo sự kiện và các loại vé")
+                        .build());
+                log.info("Initialized default permission: CREATE_EVENT");
+            }
+
             // 1. Lấy toàn bộ danh sách permissions có trong MySQL
             var allPermissions = new HashSet<>(permissionRepository.findAll());
 

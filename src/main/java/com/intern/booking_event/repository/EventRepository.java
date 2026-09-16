@@ -17,7 +17,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @EntityGraph(attributePaths = {"ticketTypes"})
     @Query("SELECT DISTINCT e FROM Event e "+
         "WHERE(:title IS NULL OR :title = '' OR LOWER(e.title) LIKE LOWER(CONCAT('%', :title, '%'))) "+
-            "AND (:category IS NULL OR :category = '' OR e.category = :category) "+
+            "AND (:category IS NULL OR :category = '' OR LOWER(e.category) LIKE LOWER(CONCAT('%', :category, '%'))) "+
             "AND (:venue IS NULL OR :venue = '' OR LOWER(e.venue) LIKE LOWER(CONCAT('%', :venue, '%'))) "+
             "AND (cast(:startDate as timestamp) IS NULL OR e.startTime >= :startDate) "+
             "AND (cast(:endDate as timestamp) IS NULL OR e.startTime <= :endDate)"
